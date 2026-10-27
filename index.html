@@ -1,4 +1,4 @@
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>猫隐 CATIN · 水墨伞面</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet"><style>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>映画伞里互动设计 · 猫隐 CATIN</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet"><style>
   :root{
     --xuan:#f2ecdf;            /* 宣纸 */
     --mo:#1c1c22;              /* 玄墨 */
@@ -236,37 +236,47 @@ html, body { background:#f2ecdf !important; overflow:hidden !important; }
   100% { opacity:.93; filter:url(#catinInkBleed) blur(.35px); }
 }
 
+.dock .ink, .dock .inks button { width:32px !important; height:32px !important; min-width:32px !important; }
+.dock .act { font-size:13px !important; padding:7px 14px !important; }
 .dock {
   position:fixed !important; left:50% !important; bottom:2vmin !important;
   transform:translateX(-50%) !important; z-index:30 !important;
+  gap:14px !important;
   background:rgba(255,252,245,.95) !important;
   border:1px solid rgba(120,95,70,.18) !important;
   box-shadow:0 8px 26px rgba(70,50,30,.13) !important;
   padding:.85vmin 1.35vmin !important; border-radius:999px !important;
 }
+/* 品牌：伞外右上空白区（距圆心 > 43vmin，在圆外） */
 #catinBrand {
-  position:fixed; left:calc(50% + 24.93vmin); top:calc(50% - 24.93vmin);
-  transform:translate(-50%,-50%);
-  z-index:25; display:flex; align-items:center; gap:.8vmin; pointer-events:none;
+  position:fixed;
+  top:max(2vmin, calc(50% - 56vmin));
+  right:calc(50% - 43vmin);
+  z-index:25; display:flex; align-items:center; gap:1.1vmin;
+  pointer-events:none;
 }
+#catinBrand .txt { display:flex; flex-direction:column; gap:.25vmin; align-items:flex-start; }
 #catinBrand .cn {
-  writing-mode:vertical-rl;
   font-family:"Ma Shan Zheng","STXingkai","STKaiti",serif;
-  font-size:3.3vmin; color:#2b2119; letter-spacing:.18em; line-height:1.02;
+  font-size:4.1vmin; color:#2b2119; letter-spacing:.14em; line-height:1.05;
 }
-#catinBrand .side { display:flex; flex-direction:column; align-items:center; gap:.85vmin; }
 #catinBrand .en {
-  font-family:Georgia,"Times New Roman",serif; font-size:.86vmin;
-  letter-spacing:.34em; color:#6b5a48; writing-mode:vertical-rl;
+  font-family:Georgia,"Times New Roman",serif; font-size:1vmin;
+  letter-spacing:.32em; color:#6b5a48; line-height:1.2;
+}
+#catinBrand .prod {
+  font-family:"Songti SC","SimSun","STSong",serif;
+  font-size:1.35vmin; letter-spacing:.14em; color:#5a4d40;
+  line-height:1.35; white-space:nowrap;
 }
 #catinSeal {
-  width:4.3vmin; height:4.3vmin; background:#b3352b; color:#fff6ea;
+  width:4.6vmin; height:4.6vmin; background:#b3352b; color:#fff6ea;
   display:flex; align-items:center; justify-content:center;
-  font-family:"Ma Shan Zheng","STXingkai",serif; font-size:1.6vmin;
-  letter-spacing:0; line-height:1; padding:.28vmin;
+  font-family:"Ma Shan Zheng","STXingkai",serif; font-size:1.75vmin;
+  letter-spacing:0; line-height:1; padding:.25vmin;
   border-radius:.22vmin; transform:rotate(-2deg);
   box-shadow:inset 0 0 0 .16vmin rgba(255,240,225,.42), 0 2px 6px rgba(120,40,30,.22);
-  writing-mode:vertical-rl; text-align:center;
+  writing-mode:vertical-rl; text-align:center; flex:0 0 auto;
 }
 #catinSpec {
   position:fixed; left:2.6vmin; top:2.4vmin; z-index:25; pointer-events:none;
@@ -289,26 +299,38 @@ html, body { height: 100%; overscroll-behavior: none; }
 @media (max-width: 780px), (pointer: coarse) {
   #catinSpec { display: none !important; }
   .dock {
-    bottom: max(3vmin, 14px) !important;
-    padding: 9px 14px !important;
-    gap: 8px !important;
-    max-width: 94vw !important;
+    bottom: max(2.5vmin, 10px) !important;
+    padding: 13px 14px !important;
+    gap: 12px !important;
+    max-width: 92vw !important;
     flex-wrap: wrap !important;
     justify-content: center !important;
-    border-radius: 18px !important;
+    border-radius: 22px !important;
   }
-  .dock .ink, .dock .inks button { width: 28px !important; height: 28px !important; min-width: 28px !important; }
+  .dock .ink, .dock .inks button {
+    width: 40px !important; height: 40px !important; min-width: 40px !important;
+    margin: 0 2px !important;
+  }
   .dock .act {
-    font-size: 13px !important;
-    padding: 7px 13px !important;
-    min-height: 34px !important;
+    font-size: 14px !important;
+    padding: 9px 14px !important;
+    min-height: 42px !important;
+    min-width: 74px !important;
     letter-spacing: .04em !important;
   }
   .dock .lbl, .dock .sep { display: none !important; }
-  #catinBrand .cn { font-size: 4.6vmin !important; }
-  #catinBrand .en { display: none !important; }
-  #catinSeal { width: 6.4vmin !important; height: 6.4vmin !important; font-size: 2.4vmin !important; }
-  #catinBrand { left: calc(50% + 27vmin) !important; top: calc(50% - 27vmin) !important; }
+  .dock .inks { flex: 0 0 100% !important; justify-content: center !important;
+                 gap: 10px !important; margin-bottom: 4px !important; }
+  /* 品牌：伞外右上，字放大到手机可读 */
+  #catinBrand .cn { font-size: 6.4vmin !important; }
+  #catinBrand .en { font-size: 1.9vmin !important; letter-spacing: .28em !important; }
+  #catinBrand .prod { font-size: 2.5vmin !important; letter-spacing: .1em !important; }
+  #catinSeal { width: 7.4vmin !important; height: 7.4vmin !important; font-size: 2.9vmin !important; }
+  #catinBrand {
+    top: max(2vmin, calc(50% - 56vmin)) !important;
+    right: calc(50% - 43vmin) !important;
+    gap: 1.6vmin !important;
+  }
 }
 </style>
 
@@ -1184,7 +1206,13 @@ requestAnimationFrame(frame);
 
   var brand = document.createElement('div');
   brand.id = 'catinBrand';
-  brand.innerHTML = '<div class="side"><div id="catinSeal">猫隐</div><div class="en">CATIN</div></div><div class="cn">猫隐</div>';
+  brand.innerHTML =
+    '<div id="catinSeal">猫隐</div>' +
+    '<div class="txt">' +
+      '<div class="cn">猫隐</div>' +
+      '<div class="en">CATIN</div>' +
+      '<div class="prod">映画伞里互动设计</div>' +
+    '</div>';
   body.appendChild(brand);
 
   var spec = document.createElement('div');
