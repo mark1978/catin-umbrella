@@ -324,40 +324,61 @@ html, body { height: 100%; overscroll-behavior: none; }
 #catinGrad canvas { width:100%; height:100%; display:block; }
 
 #catinGradPal {
-  display:none; position:fixed; left:50%; bottom:max(2.5vmin,12px);
+  display:none; position:fixed; left:50%; bottom:max(2.2vmin,10px);
   transform:translateX(-50%); z-index:35;
-  align-items:center; gap:2.2vmin;
-  background:rgba(250,246,238,.94); padding:1.4vmin 2.4vmin;
-  border-radius:999px; box-shadow:0 3px 14px rgba(90,70,50,.18);
-  pointer-events:auto;
+  flex-direction:column; align-items:stretch; gap:1.1vmin;
+  background:rgba(250,246,238,.95); padding:1.3vmin 1.8vmin;
+  border-radius:1.6vmin; box-shadow:0 3px 16px rgba(90,70,50,.18);
+  pointer-events:auto; width:min(88vw, 46vmin);
 }
-#catinGradPal .gp { display:flex; flex-direction:column; align-items:center; gap:.5vmin; }
-#catinGradPal .gp span {
-  font-family:"Songti SC","SimSun",serif; font-size:1.05vmin;
-  color:#6b5a48; letter-spacing:.1em;
+/* 第一行：三个色位 + 保存 */
+#catinGradPal .grow1 { display:flex; align-items:center; gap:1vmin; }
+#catinGradPal .slot {
+  flex:1; display:flex; align-items:center; justify-content:center; gap:.5vmin;
+  border:1px solid rgba(120,96,72,.28); border-radius:999px;
+  background:rgba(255,255,255,.5); cursor:pointer;
+  padding:.85vmin .6vmin; font-size:1.15vmin; letter-spacing:.06em;
+  font-family:"Songti SC","SimSun",serif; color:#5a4d40;
+  transition:border-color .2s, background .2s;
 }
-#catinGradPal input[type=color] {
-  width:4.6vmin; height:4.6vmin; min-width:4.6vmin;
-  border:1px solid rgba(120,96,72,.35); border-radius:50%;
-  padding:0; background:none; cursor:pointer; overflow:hidden;
+#catinGradPal .slot .dot {
+  width:1.5vmin; height:1.5vmin; border-radius:50%;
+  border:1px solid rgba(0,0,0,.15); flex:0 0 auto;
 }
-#catinGradPal input[type=color]::-webkit-color-swatch-wrapper { padding:0; }
-#catinGradPal input[type=color]::-webkit-color-swatch { border:none; border-radius:50%; }
+#catinGradPal .slot.on {
+  border-color:#2b2119; background:#fffdf8;
+  box-shadow:inset 0 0 0 1px #2b2119;
+}
 #catinGradPal .gsave {
-  border:none; cursor:pointer; margin-left:1vmin;
-  padding:1.15vmin 2.6vmin; border-radius:999px;
+  flex:0 0 auto; border:none; cursor:pointer; white-space:nowrap;
+  padding:.95vmin 2vmin; border-radius:999px;
   background:#2b2119; color:#f7f1e6;
-  font-family:"Songti SC","SimSun",serif; font-size:1.35vmin; letter-spacing:.14em;
+  font-family:"Songti SC","SimSun",serif; font-size:1.2vmin; letter-spacing:.1em;
 }
 #catinGradPal .gsave:active { opacity:.75; }
+/* 第二行：预设色板 */
+#catinGradPal .swatches {
+  display:flex; flex-wrap:wrap; justify-content:center; gap:1vmin;
+}
+#catinGradPal .sw {
+  width:3.4vmin; height:3.4vmin; border-radius:50%; cursor:pointer;
+  border:1px solid rgba(120,96,72,.25); padding:0;
+  box-shadow:inset 0 -1px 3px rgba(0,0,0,.12);
+  transition:transform .15s;
+}
+#catinGradPal .sw:active { transform:scale(.9); }
 
 @media (max-width: 780px), (pointer: coarse) {
   #catinMode button { padding:9px 18px; font-size:14px; }
-  #catinGradPal { gap:18px; padding:12px 20px; bottom:max(2.5vmin,12px); }
-  #catinGradPal .gp span { font-size:11px; }
-  #catinGradPal input[type=color] { width:40px; height:40px; min-width:40px; }
-  #catinGradPal .gsave { font-size:14px; padding:11px 22px; margin-left:6px; }
+  #catinGradPal { width:min(92vw, 380px); padding:12px 14px; gap:10px; border-radius:16px; }
+  #catinGradPal .grow1 { gap:8px; }
+  #catinGradPal .slot { font-size:13px; padding:9px 6px; gap:5px; }
+  #catinGradPal .slot .dot { width:16px; height:16px; }
+  #catinGradPal .gsave { font-size:14px; padding:10px 18px; }
+  #catinGradPal .swatches { gap:8px; }
+  #catinGradPal .sw { width:34px; height:34px; }
 }
+
 
 /* ── 圆心统一变量：所有层（墨/伞骨/遮罩/包边/伞头/猫）共用，杜绝错位 ── */
 :root { --cy: 50%; }
@@ -1298,12 +1319,22 @@ requestAnimationFrame(frame);
 
   var gradPal = document.createElement('div');
   gradPal.id = 'catinGradPal';
+  var PRESETS = ['#b5651d','#c1362f','#d9a441','#a5924a','#4a6b4a','#2b5d7a',
+                 '#3a4a5a','#6b3a5a','#a8405a','#c9b6c9','#8b8378','#f6f1e4'];
+  var slotHtml = '';
+  ['中心','中环','边缘'].forEach(function(t, i){
+    slotHtml += '<button class="slot' + (i===0?' on':'') + '" data-i="' + i + '">' +
+                '<span class="dot" id="dot' + i + '"></span>' + t + '</button>';
+  });
+  var swHtml = '';
+  PRESETS.forEach(function(c){
+    swHtml += '<button class="sw" data-c="' + c + '" style="background:' + c + '"></button>';
+  });
   gradPal.innerHTML =
-    '<label class="gp"><input type="color" id="gc0" value="#c9a63c"><span>中心</span></label>' +
-    '<label class="gp"><input type="color" id="gc1" value="#8fa07a"><span>中环</span></label>' +
-    '<label class="gp"><input type="color" id="gc2" value="#f2ecdf"><span>边缘</span></label>' +
-    '<button id="gradSave" class="gsave">保存</button>';
+    '<div class="grow1">' + slotHtml + '<button id="gradSave" class="gsave">保存</button></div>' +
+    '<div class="swatches">' + swHtml + '</div>';
   document.body.appendChild(gradPal);
+  window.__CATIN_PRESETS = PRESETS;
 
   body.appendChild(Object.assign(document.createElement('div'), {id:'catinRim'}));
 
@@ -1459,6 +1490,8 @@ requestAnimationFrame(frame);
 (function(){
   var mode = 'fluid';
   var noiseCv = null;
+  var colors = ['#c9a63c', '#8fa07a', '#f2ecdf'];
+  var curSlot = 0;
 
   function makeNoise(S){
     if (noiseCv) return noiseCv;
@@ -1491,9 +1524,7 @@ requestAnimationFrame(frame);
     var g = cv.getContext('2d');
     var cx = S/2, cy = S/2, R = S/2;
 
-    var c0 = document.getElementById('gc0').value;
-    var c1 = document.getElementById('gc1').value;
-    var c2 = document.getElementById('gc2').value;
+    var c0 = colors[0], c1 = colors[1], c2 = colors[2];
 
     // 同心径向渐变：中心 -> 中环 -> 边缘
     var rg = g.createRadialGradient(cx, cy, 0, cx, cy, R);
@@ -1566,7 +1597,7 @@ requestAnimationFrame(frame);
     [].forEach.call(document.querySelectorAll('#catinMode button'), function(b){
       b.classList.toggle('on', b.getAttribute('data-m') === m);
     });
-    if (isGrad) drawGradient();
+    if (isGrad) { paintDots(); drawGradient(); }
   }
 
   document.getElementById('catinMode').addEventListener('click', function(e){
@@ -1574,12 +1605,28 @@ requestAnimationFrame(frame);
     if (b) setMode(b.getAttribute('data-m'));
   });
 
-  ['gc0','gc1','gc2'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('input', drawGradient);
-      el.addEventListener('change', drawGradient);
+  function paintDots(){
+    for (var i = 0; i < 3; i++) {
+      var d = document.getElementById('dot' + i);
+      if (d) d.style.background = colors[i];
     }
+  }
+
+  [].forEach.call(document.querySelectorAll('#catinGradPal .slot'), function(b){
+    b.addEventListener('click', function(){
+      curSlot = parseInt(b.getAttribute('data-i'), 10) || 0;
+      [].forEach.call(document.querySelectorAll('#catinGradPal .slot'), function(x){
+        x.classList.toggle('on', x === b);
+      });
+    });
+  });
+
+  [].forEach.call(document.querySelectorAll('#catinGradPal .sw'), function(b){
+    b.addEventListener('click', function(){
+      colors[curSlot] = b.getAttribute('data-c');
+      paintDots();
+      drawGradient();
+    });
   });
 
   var gsBtn = document.getElementById('gradSave');
