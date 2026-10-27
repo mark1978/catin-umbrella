@@ -232,10 +232,11 @@ html, body { background:#f2ecdf !important; overflow:hidden !important; }
             scale(var(--es,1)) rotate(var(--er,0deg));
   transform-origin:50% 50%;
   opacity:0;
-  animation:catAppear 5.5s ease-out 0.8s forwards;
+  animation:catAppear 2.1s ease-out .2s forwards;
   touch-action:none;
-  /* 猫图已做 alpha 抠底（白->透明），不再需要 multiply，避免矩形白底与缩放旋转冲突 */
-  filter:url(#catinInkBleed);
+  /* 图片已做 alpha 抠底；用 CSS 轻微柔化代替 SVG 位移滤镜
+     （feDisplacementMap 在多图切换 + transform 下会合成错乱，整块发黑） */
+  filter:blur(.35px) saturate(.92) contrast(1.04);
 }
 #catinCat img {
   width:100%; height:100%; display:block;
@@ -302,9 +303,9 @@ html, body { background:#f2ecdf !important; overflow:hidden !important; }
   #catinElBar .eb .thumb { width:48px; height:48px; font-size:13px; }
 }
 @keyframes catAppear {
-  0%   { opacity:0;   filter:url(#catinInkBleed) blur(9px); }
-  55%  { opacity:.88; filter:url(#catinInkBleed) blur(1.6px); }
-  100% { opacity:.93; filter:url(#catinInkBleed) blur(.35px); }
+  0%   { opacity:0;   filter:blur(9px); }
+  55%  { opacity:.88; filter:blur(1.6px); }
+  100% { opacity:.93; filter:blur(.35px) saturate(.92) contrast(1.04); }
 }
 
 .dock .lbl { display:none !important; }
@@ -1923,7 +1924,7 @@ requestAnimationFrame(frame);
       return;
     }
     if (imgEl && SRC[el] && imgEl.src !== SRC[el]) {
-      imgEl.onload = fitRatio;
+      imgEl.onload = function(){ fitRatio(); };
       imgEl.src = SRC[el];
     }
     cat.style.display = '';
@@ -1932,6 +1933,10 @@ requestAnimationFrame(frame);
     st.x = 0; st.y = 0; st.s = 1; st.r = 0;
     apply();
     fitRatio();
+    // 重播显影：每次换图都从模糊晕开
+    cat.style.animation = 'none';
+    void cat.offsetWidth;
+    cat.style.animation = '';
   });
 
 
