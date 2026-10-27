@@ -169,14 +169,14 @@ html, body { background:#f2ecdf !important; overflow:hidden !important; }
 #fanOverlay, .fanWrap, .fanActs, .fanCaption { display:none !important; }
 
 #c {
-  position:fixed !important; left:50% !important; top:50% !important;
+  position:fixed !important; left:50% !important; top:var(--cy) !important;
   transform:translate(-50%,-50%) !important;
   width:86vmin !important; height:86vmin !important;
   border-radius:50% !important; clip-path:circle(50%) !important;
   z-index:1 !important;
 }
 #catinVeil {
-  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  position:fixed; left:50%; top:var(--cy); transform:translate(-50%,-50%);
   width:86vmin; height:86vmin; border-radius:50%;
   pointer-events:none; z-index:20;
   background:radial-gradient(circle at 50% 50%,
@@ -184,18 +184,18 @@ html, body { background:#f2ecdf !important; overflow:hidden !important; }
     rgba(242,236,223,.62) 94%, #f2ecdf 100%);
 }
 #catinRim {
-  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  position:fixed; left:50%; top:var(--cy); transform:translate(-50%,-50%);
   width:86vmin; height:86vmin; border-radius:50%;
   pointer-events:none; z-index:23;
   box-shadow: inset 0 0 0 2px rgba(120,96,72,.42), inset 0 0 22px rgba(90,70,50,.10),
               0 0 0 1px rgba(120,96,72,.18), 0 10px 34px rgba(70,50,30,.14);
 }
 #catinRibs {
-  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  position:fixed; left:50%; top:var(--cy); transform:translate(-50%,-50%);
   width:86vmin; height:86vmin; pointer-events:none; z-index:21;
 }
 #catinHub {
-  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  position:fixed; left:50%; top:var(--cy); transform:translate(-50%,-50%);
   width:3.1vmin; height:3.1vmin; border-radius:50%; pointer-events:none; z-index:22;
   background:radial-gradient(circle at 38% 32%, #93795f 0%, #5b4636 55%, #3a2b20 100%);
   box-shadow:0 2px 8px rgba(40,30,20,.5), inset 0 0 5px rgba(255,255,255,.25);
@@ -203,21 +203,23 @@ html, body { background:#f2ecdf !important; overflow:hidden !important; }
 
 /* ── 柔光：让猫所在处纸面留白，墨再浓猫也不消失 ── */
 #catinCatGlow {
-  position:fixed; left:calc(50% - 2.7vmin); top:calc(50% + 11vmin);
-  width:50vmin; height:56vmin;
+  position:fixed; left:calc(50% - 2.7vmin); top:calc(var(--cy) + 11vmin);
+  width:58vmin; height:64vmin;
   transform:translate(-50%,-50%);
   z-index:7; pointer-events:none;
-  background:radial-gradient(ellipse at 50% 48%,
-    rgba(242,236,223,.90) 0%,
-    rgba(242,236,223,.66) 38%,
-    rgba(242,236,223,.28) 64%,
-    rgba(242,236,223,0) 84%);
-  filter:blur(4px);
+  /* closest-side：渐变半径落在元素边缘，边缘 alpha=0，不会露出矩形边框 */
+  background:radial-gradient(ellipse closest-side at 50% 48%,
+    rgba(242,236,223,.92) 0%,
+    rgba(242,236,223,.70) 38%,
+    rgba(242,236,223,.30) 66%,
+    rgba(242,236,223,.06) 88%,
+    rgba(242,236,223,0) 100%);
+  filter:blur(6px);
 }
 
 /* ── 墨猫层：显影 + 边缘渗化 + 呼吸 ── */
 #catinCat {
-  position:fixed; left:calc(50% - 2.7vmin); top:calc(50% + 11vmin);
+  position:fixed; left:calc(50% - 2.7vmin); top:calc(var(--cy) + 11vmin);
   width:36vmin; height:46vmin; z-index:8; pointer-events:none;
   transform:translate(-50%,-50%);
   mix-blend-mode:multiply;
@@ -297,22 +299,24 @@ html, body { height: 100%; overscroll-behavior: none; }
 #c { touch-action: none !important; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
 #catinCat, #catinVeil, #catinRibs, #catinRim, #catinHub, #catinBrand, #catinSpec, #catinCatGlow { -webkit-user-select: none; user-select: none; }
 
+/* ── 圆心统一变量：所有层（墨/伞骨/遮罩/包边/伞头/猫）共用，杜绝错位 ── */
+:root { --cy: 50%; }
+
+/* 竖屏：整体再上移，消除下沉感 */
+@media (orientation: portrait) {
+  :root { --cy: 42%; }
+  #catinBrand { bottom: calc(58% + 44vmin) !important; }
+}
+
 /* 横屏：圆占满高度，题款移到右侧空白区垂直居中 */
 @media (orientation: landscape) {
-  #c { top: 47% !important; }
-  #catinCat, #catinCatGlow { top: calc(47% + 10vmin) !important; }
+  :root { --cy: 45%; }
   #catinBrand {
-    top: 50% !important;
+    top: 45% !important;
     bottom: auto !important;
     transform: translateY(-50%);
     right: 3.5vmin !important;
   }
-}
-
-/* 竖屏：整体上移，避免视觉下沉 */
-@media (orientation: portrait) {
-  #c { top: 45% !important; }
-  #catinCat, #catinCatGlow { top: calc(45% + 10vmin) !important; }
 }
 
 @media (max-width: 780px), (pointer: coarse) {
@@ -346,7 +350,7 @@ html, body { height: 100%; overscroll-behavior: none; }
   #catinBrand .en { font-size: 1.7vmin !important; letter-spacing: .26em !important; }
   #catinSeal { width: 8vmin !important; height: 8vmin !important; font-size: 3.1vmin !important; }
   #catinBrand {
-    bottom: calc(55% + 44vmin) !important;
+    bottom: calc(58% + 44vmin) !important;
     right: calc(50% - 43vmin) !important;
     gap: 1.4vmin !important;
   }
