@@ -299,6 +299,66 @@ html, body { height: 100%; overscroll-behavior: none; }
 #c { touch-action: none !important; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
 #catinCat, #catinVeil, #catinRibs, #catinRim, #catinHub, #catinBrand, #catinSpec, #catinCatGlow { -webkit-user-select: none; user-select: none; }
 
+
+/* ══ 渐变模式 ══ */
+#catinMode {
+  position:fixed; top:max(2vmin,10px); left:50%; transform:translateX(-50%);
+  z-index:36; display:flex; gap:0; border-radius:999px; overflow:hidden;
+  box-shadow:0 2px 10px rgba(90,70,50,.16); pointer-events:auto;
+}
+#catinMode button {
+  border:none; margin:0; cursor:pointer;
+  padding:.75vmin 2.4vmin; font-size:1.35vmin; letter-spacing:.12em;
+  font-family:"Songti SC","SimSun",serif;
+  background:rgba(250,246,238,.92); color:#6b5a48;
+  transition:background .25s, color .25s;
+}
+#catinMode button.on { background:#2b2119; color:#f7f1e6; }
+
+#catinGrad {
+  display:none; position:fixed; left:50%; top:var(--cy);
+  transform:translate(-50%,-50%);
+  width:86vmin; height:86vmin; border-radius:50%; overflow:hidden;
+  z-index:1; pointer-events:none;
+}
+#catinGrad canvas { width:100%; height:100%; display:block; }
+
+#catinGradPal {
+  display:none; position:fixed; left:50%; bottom:max(2.5vmin,12px);
+  transform:translateX(-50%); z-index:35;
+  align-items:center; gap:2.2vmin;
+  background:rgba(250,246,238,.94); padding:1.4vmin 2.4vmin;
+  border-radius:999px; box-shadow:0 3px 14px rgba(90,70,50,.18);
+  pointer-events:auto;
+}
+#catinGradPal .gp { display:flex; flex-direction:column; align-items:center; gap:.5vmin; }
+#catinGradPal .gp span {
+  font-family:"Songti SC","SimSun",serif; font-size:1.05vmin;
+  color:#6b5a48; letter-spacing:.1em;
+}
+#catinGradPal input[type=color] {
+  width:4.6vmin; height:4.6vmin; min-width:4.6vmin;
+  border:1px solid rgba(120,96,72,.35); border-radius:50%;
+  padding:0; background:none; cursor:pointer; overflow:hidden;
+}
+#catinGradPal input[type=color]::-webkit-color-swatch-wrapper { padding:0; }
+#catinGradPal input[type=color]::-webkit-color-swatch { border:none; border-radius:50%; }
+#catinGradPal .gsave {
+  border:none; cursor:pointer; margin-left:1vmin;
+  padding:1.15vmin 2.6vmin; border-radius:999px;
+  background:#2b2119; color:#f7f1e6;
+  font-family:"Songti SC","SimSun",serif; font-size:1.35vmin; letter-spacing:.14em;
+}
+#catinGradPal .gsave:active { opacity:.75; }
+
+@media (max-width: 780px), (pointer: coarse) {
+  #catinMode button { padding:9px 18px; font-size:14px; }
+  #catinGradPal { gap:18px; padding:12px 20px; bottom:max(2.5vmin,12px); }
+  #catinGradPal .gp span { font-size:11px; }
+  #catinGradPal input[type=color] { width:40px; height:40px; min-width:40px; }
+  #catinGradPal .gsave { font-size:14px; padding:11px 22px; margin-left:6px; }
+}
+
 /* ── 圆心统一变量：所有层（墨/伞骨/遮罩/包边/伞头/猫）共用，杜绝错位 ── */
 :root { --cy: 50%; }
 
@@ -394,10 +454,10 @@ html, body { height: 100%; overscroll-behavior: none; }
   </div>
   <div class="sep"></div>
   <button class="act" id="autoBtn" aria-pressed="true" title="Toggle automatic ink drops and currents when idle">
-    <span class="dot"></span>Auto Ink
+    <span class="dot"></span>自动
   </button>
   <button class="act" id="fanBtn" title="Dip the fan in water and transfer the ink pattern onto it">Make Fan</button>
-  <button class="act" id="washBtn" title="Slowly rinse the ink away">Wash</button>
+  <button class="act" id="washBtn" title="慢慢洗去墨迹">擦除</button>
 </div>
 
 <div class="fanOverlay" id="fanOverlay" hidden="">
@@ -1225,6 +1285,26 @@ requestAnimationFrame(frame);
   body.appendChild(svg);
 
   body.appendChild(Object.assign(document.createElement('div'), {id:'catinHub'}));
+  /* 渐变模式 UI */
+  var modeBar = document.createElement('div');
+  modeBar.id = 'catinMode';
+  modeBar.innerHTML = '<button data-m="fluid" class="on">流体</button><button data-m="grad">渐变</button>';
+  document.body.appendChild(modeBar);
+
+  var gradWrap = document.createElement('div');
+  gradWrap.id = 'catinGrad';
+  gradWrap.innerHTML = '<canvas id="catinGradCv"></canvas>';
+  document.body.appendChild(gradWrap);
+
+  var gradPal = document.createElement('div');
+  gradPal.id = 'catinGradPal';
+  gradPal.innerHTML =
+    '<label class="gp"><input type="color" id="gc0" value="#c9a63c"><span>中心</span></label>' +
+    '<label class="gp"><input type="color" id="gc1" value="#8fa07a"><span>中环</span></label>' +
+    '<label class="gp"><input type="color" id="gc2" value="#f2ecdf"><span>边缘</span></label>' +
+    '<button id="gradSave" class="gsave">保存</button>';
+  document.body.appendChild(gradPal);
+
   body.appendChild(Object.assign(document.createElement('div'), {id:'catinRim'}));
 
   var brand = document.createElement('div');
@@ -1244,7 +1324,8 @@ requestAnimationFrame(frame);
 
   /* ── 保存伞面（含猫层） ── */
   function saveUmbrella(){
-    var c = document.getElementById('c');
+    var isGrad = (window.catinGetMode && window.catinGetMode() === 'grad');
+    var c = isGrad ? document.getElementById('catinGradCv') : document.getElementById('c');
     var S = 2000, R = S * 0.43, cx = S/2, cy = S/2;
     var out = document.createElement('canvas'); out.width = out.height = S;
     var g = out.getContext('2d');
@@ -1255,16 +1336,19 @@ requestAnimationFrame(frame);
     try { g.drawImage(c, cx-R, cy-R, R*2, R*2); } catch(e){}
     g.restore();
 
-    var rg = g.createRadialGradient(cx,cy,R*0.62,cx,cy,R);
-    rg.addColorStop(0,'rgba(242,236,223,0)');
-    rg.addColorStop(0.62,'rgba(242,236,223,0)');
-    rg.addColorStop(0.80,'rgba(242,236,223,.16)');
-    rg.addColorStop(0.94,'rgba(242,236,223,.62)');
-    rg.addColorStop(1,'rgba(242,236,223,1)');
-    g.save(); g.beginPath(); g.arc(cx,cy,R,0,Math.PI*2); g.clip();
-    g.fillStyle = rg; g.fillRect(0,0,S,S); g.restore();
+    if (!isGrad) {
+      var rg = g.createRadialGradient(cx,cy,R*0.62,cx,cy,R);
+      rg.addColorStop(0,'rgba(242,236,223,0)');
+      rg.addColorStop(0.62,'rgba(242,236,223,0)');
+      rg.addColorStop(0.80,'rgba(242,236,223,.16)');
+      rg.addColorStop(0.94,'rgba(242,236,223,.62)');
+      rg.addColorStop(1,'rgba(242,236,223,1)');
+      g.save(); g.beginPath(); g.arc(cx,cy,R,0,Math.PI*2); g.clip();
+      g.fillStyle = rg; g.fillRect(0,0,S,S); g.restore();
+    }
 
-    /* 猫周围留白柔光 */
+    /* 猫周围留白柔光（渐变模式无猫） */
+    if (!isGrad) {
     var glowCX = cx - S * 0.0427, glowY = cy + S * 0.1100, glowR = S * 0.32;
     var gg = g.createRadialGradient(glowCX, glowY, 0, glowCX, glowY, glowR);
     gg.addColorStop(0,    'rgba(242,236,223,.92)');
@@ -1285,6 +1369,7 @@ requestAnimationFrame(frame);
       g.globalCompositeOperation = 'multiply';
       g.drawImage(img, glowCX - realW/2, glowY - realH/2, realW, realH);
       g.restore();
+    }
     }
 
     /* 伞骨 */
@@ -1338,7 +1423,7 @@ requestAnimationFrame(frame);
       try { file = new File([blob], fname, {type:'image/png'}); } catch(e){}
 
       /* 手机优先走系统分享（可直接存相册 / 发微信） */
-      if (file && navigator.canShare && navigator.canShare({files:[file]})) {
+      if (matchMedia('(pointer: coarse)').matches && file && navigator.canShare && navigator.canShare({files:[file]})) {
         navigator.share({files:[file], title:'猫隐伞面'}).then(function(){
           say('已分享 / 保存');
         }).catch(function(){ /* 用户取消，静默 */ });
@@ -1356,7 +1441,7 @@ requestAnimationFrame(frame);
   var oldBtn = document.getElementById('fanBtn');
   if (oldBtn) {
     var btn = oldBtn.cloneNode(true);
-    btn.textContent = '保存伞面';
+    btn.textContent = '保存';
     btn.removeAttribute('aria-pressed');
     btn.title = '把当前伞面保存为 PNG';
     oldBtn.parentNode.replaceChild(btn, oldBtn);
@@ -1369,4 +1454,142 @@ requestAnimationFrame(frame);
   window.__setCat = function(src){ cat.querySelector('img').src = src; };
 })();
 </script>
-</body></html>
+<script>
+/* ══════════ 渐变模式 ══════════ */
+(function(){
+  var mode = 'fluid';
+  var noiseCv = null;
+
+  function makeNoise(S){
+    if (noiseCv) return noiseCv;
+    var c = document.createElement('canvas'); c.width = S; c.height = S;
+    var g = c.getContext('2d');
+    var img = g.createImageData(S, S);
+    var d = img.data;
+    for (var i = 0; i < d.length; i += 4) {
+      var n = 128 + (Math.random() - 0.5) * 42;
+      d[i] = d[i+1] = d[i+2] = n;
+      d[i+3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    noiseCv = c;
+    return c;
+  }
+
+  function hexA(hex, a){
+    hex = (hex || '#000000').replace('#','');
+    if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+    var n = parseInt(hex, 16);
+    return 'rgba(' + ((n>>16)&255) + ',' + ((n>>8)&255) + ',' + (n&255) + ',' + a + ')';
+  }
+
+  function drawGradient(){
+    var cv = document.getElementById('catinGradCv');
+    if (!cv) return;
+    var S = 900;
+    cv.width = S; cv.height = S;
+    var g = cv.getContext('2d');
+    var cx = S/2, cy = S/2, R = S/2;
+
+    var c0 = document.getElementById('gc0').value;
+    var c1 = document.getElementById('gc1').value;
+    var c2 = document.getElementById('gc2').value;
+
+    // 同心径向渐变：中心 -> 中环 -> 边缘
+    var rg = g.createRadialGradient(cx, cy, 0, cx, cy, R);
+    rg.addColorStop(0.00, c0);
+    rg.addColorStop(0.50, c1);
+    rg.addColorStop(0.86, c2);
+    rg.addColorStop(1.00, c2);
+    g.fillStyle = rg;
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
+
+    // 手工染色不均：几块偏移的柔和色斑，打破"数码渐变"的均匀感
+    var spots = [
+      {dx:-0.16, dy:-0.10, rx:0.46, c:c0, a:0.20},
+      {dx: 0.18, dy: 0.12, rx:0.40, c:c1, a:0.16},
+      {dx: 0.04, dy:-0.20, rx:0.32, c:c2, a:0.12},
+      {dx:-0.10, dy: 0.20, rx:0.34, c:c1, a:0.09}
+    ];
+    for (var i = 0; i < spots.length; i++) {
+      var sp = spots[i];
+      var px = cx + sp.dx * S, py = cy + sp.dy * S, pr = sp.rx * R;
+      var sg = g.createRadialGradient(px, py, 0, px, py, pr);
+      sg.addColorStop(0, hexA(sp.c, sp.a));
+      sg.addColorStop(0.55, hexA(sp.c, sp.a * 0.45));
+      sg.addColorStop(1, hexA(sp.c, 0));
+      g.fillStyle = sg;
+      g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
+    }
+
+    // 宣纸纹理（叠加 + 柔化）
+    g.save();
+    g.globalAlpha = 0.30;
+    g.globalCompositeOperation = 'multiply';
+    g.drawImage(makeNoise(S), 0, 0);
+    g.restore();
+
+    // 边缘墨晕：向内渐深的暗边，模拟纸边吸墨
+    var vg = g.createRadialGradient(cx, cy, R*0.70, cx, cy, R);
+    vg.addColorStop(0.00, 'rgba(58,44,30,0)');
+    vg.addColorStop(0.60, 'rgba(58,44,30,0.04)');
+    vg.addColorStop(0.86, 'rgba(58,44,30,0.11)');
+    vg.addColorStop(1.00, 'rgba(58,44,30,0.20)');
+    g.fillStyle = vg;
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
+
+    // 一圈极淡的内晕，让渐变不"死"
+    var ig = g.createRadialGradient(cx, cy, 0, cx, cy, R*0.55);
+    ig.addColorStop(0, 'rgba(255,252,245,0.16)');
+    ig.addColorStop(1, 'rgba(255,252,245,0)');
+    g.fillStyle = ig;
+    g.beginPath(); g.arc(cx, cy, R, 0, Math.PI*2); g.fill();
+  }
+
+  function setMode(m){
+    mode = m;
+    var isGrad = (m === 'grad');
+    var cvs = document.getElementById('c');
+    var dock = document.querySelector('.dock');
+    var cat = document.getElementById('catinCat');
+    var glow = document.getElementById('catinCatGlow');
+
+    if (cvs) cvs.style.display = isGrad ? 'none' : '';
+    var gw = document.getElementById('catinGrad');
+    if (gw) gw.style.display = isGrad ? 'block' : 'none';
+    var gp = document.getElementById('catinGradPal');
+    if (gp) gp.style.display = isGrad ? 'flex' : 'none';
+    if (dock) dock.style.display = isGrad ? 'none' : '';
+    if (cat) cat.style.display = isGrad ? 'none' : '';
+    if (glow) glow.style.display = isGrad ? 'none' : '';
+
+    [].forEach.call(document.querySelectorAll('#catinMode button'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-m') === m);
+    });
+    if (isGrad) drawGradient();
+  }
+
+  document.getElementById('catinMode').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-m]');
+    if (b) setMode(b.getAttribute('data-m'));
+  });
+
+  ['gc0','gc1','gc2'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', drawGradient);
+      el.addEventListener('change', drawGradient);
+    }
+  });
+
+  var gsBtn = document.getElementById('gradSave');
+  if (gsBtn) gsBtn.addEventListener('click', function(){
+    if (window.__saveUmbrella) window.__saveUmbrella();
+  });
+
+  // 暴露给保存逻辑
+  window.catinSetMode = setMode;
+  window.catinDrawGradient = drawGradient;
+  window.catinGetMode = function(){ return mode; };
+})();
+</script></body></html>
