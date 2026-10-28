@@ -1554,7 +1554,10 @@ requestAnimationFrame(frame);
       g.globalCompositeOperation = 'source-over';
       var _st = window.__elState || {x:0,y:0,s:1,r:0};
       var _vmin = Math.min(window.innerWidth, window.innerHeight) / 100;
-      var _k = S / (0.86 * _vmin);
+      // CSS 里圆直径是 86vmin，对应导出画布上的 2R = S*0.86
+      // 所以 1 CSS px = (S*0.86)/(86*vmin) = S/(100*vmin)... 化简后：
+      // 拖动位移 _st.x(px) 换算到画布像素 = _st.x * S / (86 * _vmin)
+      var _k = S / (86 * _vmin);
       g.translate(glowCX + _st.x * _k, glowY + _st.y * _k);
       g.rotate((_st.r || 0) * Math.PI / 180);
       g.scale(_st.s || 1, _st.s || 1);
