@@ -1856,7 +1856,10 @@ requestAnimationFrame(frame);
     HIT_W = Math.max(24, Math.round(128 / ratio));
     hitCv.width = HIT_W; hitCv.height = HIT_H;
     hitCtx.clearRect(0, 0, HIT_W, HIT_H);
+    // 膨胀：鲸鱼这类点阵图墨占比只有 5%，不膨胀几乎点不中
+    hitCtx.filter = 'blur(1.8px)';
     hitCtx.drawImage(im, 0, 0, HIT_W, HIT_H);
+    hitCtx.filter = 'none';
     try { hitData = hitCtx.getImageData(0, 0, HIT_W, HIT_H).data; } catch(e) { hitData = null; }
   }
 
@@ -1870,50 +1873,79 @@ requestAnimationFrame(frame);
     var a = -(st.r || 0) * Math.PI / 180;
     var rx = (dx * Math.cos(a) - dy * Math.sin(a)) / (st.s || 1);
     var ry = (dx * Math.sin(a) + dy * Math.cos(a)) / (st.s || 1);
+    // 中心区无条件可点：稀疏点阵/细线（鲸鱼 5%、蒲公英 7% 墨占比）
+    // 若只按 alpha 判定，用户两指几乎落不到墨上，手势起不来
+    if (Math.abs(rx) < w * 0.28 && Math.abs(ry) < h * 0.28) return true;
+
     var ix = Math.floor((rx / w + 0.5) * HIT_W);
     var iy = Math.floor((ry / h + 0.5) * HIT_H);
     if (ix < 0 || iy < 0 || ix >= HIT_W || iy >= HIT_H) return false;
-    return hitData[(iy * HIT_W + ix) * 4 + 3] > 22;
+    return hitData[(iy * HIT_W + ix) * 4 + 3] > 14;
   }
 
   cat.style.pointerEvents = 'none';
 
+  /* 双指基准：记录两指距离/角度/中点，以及缩放锚点 */
+  function beginPinch(){
+    var L = ptList();
+    if (L.length < 2) return;
+    pinch = {
+      d: Math.max(8, dist(L[0], L[1])),
+      a: ang(L[0], L[1]),
+      s: st.s, r: st.r,
+      mx: (L[0].x + L[1].x) / 2,
+      my: (L[0].y + L[1].y) / 2,
+      ox: st.x, oy: st.y
+    };
+  }
+
   function beginDrag(e){
     st.sel = true; apply();
     pts[e.pointerId] = { x:e.clientX, y:e.clientY };
-    start = { x:st.x, y:st.y, s:st.s, r:st.r, cx:e.clientX, cy:e.clientY };
-    var L = ptList();
-    if (L.length === 2) {
-      pinch = { d:dist(L[0],L[1]), a:ang(L[0],L[1]), s:st.s, r:st.r };
-    }
+    start = { x:st.x, y:st.y, cx:e.clientX, cy:e.clientY };
   }
 
   function onMove(e){
     if (!pts[e.pointerId]) return;
-    pts[e.pointerId] = { x:e.clientX, y:e.clientY };
+    // 取合并事件里最后一个，避免移动端采样被节流导致"跟不上手"
+    var evs = (e.getCoalescedEvents && e.getCoalescedEvents()) || [];
+    var last = evs.length ? evs[evs.length - 1] : e;
+    pts[e.pointerId] = { x:last.clientX, y:last.clientY };
+
     var L = ptList();
-    if (L.length >= 2 && pinch) {
-      var d = dist(L[0],L[1]), a = ang(L[0],L[1]);
+    if (L.length >= 2) {
+      if (!pinch) { beginPinch(); return; }
+      var d = Math.max(8, dist(L[0], L[1]));
+      var a = ang(L[0], L[1]);
+      var mx = (L[0].x + L[1].x) / 2;
+      var my = (L[0].y + L[1].y) / 2;
+
+      // 缩放：线性跟随两指开合；同时平移跟随两指中点（手感"跟手"）
       st.s = Math.max(0.25, Math.min(5, pinch.s * (d / pinch.d)));
       st.r = pinch.r + (a - pinch.a);
+      st.x = pinch.ox + (mx - pinch.mx);
+      st.y = pinch.oy + (my - pinch.my);
       apply();
     } else if (start) {
-      st.x = start.x + (e.clientX - start.cx);
-      st.y = start.y + (e.clientY - start.cy);
+      st.x = start.x + (last.clientX - start.cx);
+      st.y = start.y + (last.clientY - start.cy);
       apply();
     }
   }
 
   function onUp(e){
     delete pts[e.pointerId];
-    if (Object.keys(pts).length === 0) {
+    var L = ptList();
+    if (L.length === 0) {
       start = null; pinch = null;
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
       window.removeEventListener('pointerdown', extraDown, true);
-    } else if (Object.keys(pts).length === 1) {
+    } else if (L.length === 1) {
+      // 双指 -> 单指：用剩下的那根手指重建拖动基准，避免图片跳回原位
       pinch = null;
+      start = { x:st.x, y:st.y, cx:L[0].x, cy:L[0].y };
     }
   }
 
@@ -1923,10 +1955,7 @@ requestAnimationFrame(frame);
     if (pts[e.pointerId]) return;
     e.stopPropagation(); e.preventDefault();
     pts[e.pointerId] = { x:e.clientX, y:e.clientY };
-    var L = ptList();
-    if (L.length === 2) {
-      pinch = { d:dist(L[0],L[1]), a:ang(L[0],L[1]), s:st.s, r:st.r };
-    }
+    if (ptList().length >= 2) beginPinch();
   }
 
   function bindDrag(e){
@@ -1936,6 +1965,11 @@ requestAnimationFrame(frame);
     window.addEventListener('pointercancel', onUp);
     window.addEventListener('pointerdown', extraDown, true);
   }
+
+  /* iOS 双指缩放页面会抢走手势 */
+  ['gesturestart','gesturechange','gestureend'].forEach(function(t){
+    document.addEventListener(t, function(e){ e.preventDefault(); }, { passive:false });
+  });
 
   /* 统一在 canvas 的捕获阶段判定：点中墨迹=拖动图片，其余一律落墨 */
   canvas.addEventListener('pointerdown', function(e){
