@@ -1567,10 +1567,16 @@ requestAnimationFrame(frame);
       var file = null;
       try { file = new File([blob], fname, {type:'image/png'}); } catch(e){}
 
+      var _et = (window.__elState || {}).type || 'cat';
+      var _nm = {cat:'猫', warrior:'武士', whale:'鲸鱼', dandelion:'蒲公英', none:'无元素'};
+      var _hasEl = !isGrad && _et !== 'none' && img && img.complete && img.naturalWidth;
+      var _tag = isGrad ? '渐变模式(不含元素)' : (_hasEl ? '含' + (_nm[_et] || _et) : '纯流体');
+      try { window.__lastSaveTag = _tag; } catch(e){}
+
       /* 手机优先走系统分享（可直接存相册 / 发微信） */
       if (matchMedia('(pointer: coarse)').matches && file && navigator.canShare && navigator.canShare({files:[file]})) {
         navigator.share({files:[file], title:'猫隐伞面'}).then(function(){
-          say('已分享 / 保存');
+          say('已保存 · ' + _tag);
         }).catch(function(){ /* 用户取消，静默 */ });
         return;
       }
@@ -1579,7 +1585,7 @@ requestAnimationFrame(frame);
       a.download = fname;
       a.href = url; body.appendChild(a); a.click();
       setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1500);
-      say('已保存伞面 ' + S + '×' + S);
+      say('已保存 ' + S + '×' + S + ' · ' + _tag);
     }, 'image/png');
   }
 
