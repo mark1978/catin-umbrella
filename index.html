@@ -274,7 +274,16 @@ html, body { background:#f2ecdf !important; overflow:hidden !important; }
 #catinElBar .eb {
   position:relative; display:flex; flex-direction:column; align-items:center;
   gap:.35vmin; border:none; background:none; cursor:pointer; padding:0;
+  border-radius:50%;
 }
+/* 选中态：细圆环（不填充，避免出现底色块） */
+#catinElBar .eb::after {
+  content:''; position:absolute; inset:-.45vmin; border-radius:50%;
+  border:.22vmin solid transparent; pointer-events:none;
+  transition:border-color .22s ease, transform .22s ease;
+  transform:scale(.92);
+}
+#catinElBar .eb.on::after { border-color:#2b2119; transform:scale(1); }
 #catinElBar .eb .thumb {
   width:8.2vmin; height:8.2vmin; border-radius:50%; overflow:hidden;
   background:none; border:none;
@@ -300,6 +309,7 @@ html, body { background:#f2ecdf !important; overflow:hidden !important; }
 @media (max-width: 780px), (pointer: coarse) {
   #catinElBar { gap:10px; padding:8px 12px; bottom:calc(max(2.5vmin,10px) + 120px); }
   #catinElBar .eb .thumb { width:48px; height:48px; font-size:13px; }
+  #catinElBar .eb::after { inset:-3px; border-width:2px; }
 }
 @keyframes catAppear {
   0%   { opacity:0;   filter:blur(9px); }
@@ -1899,29 +1909,52 @@ requestAnimationFrame(frame);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('pointerdown', extraDown, true);
     } else if (Object.keys(pts).length === 1) {
       pinch = null;
     }
   }
 
+  /* 拖动进行中：任何新落下的手指都并入，用于双指缩放/旋转 */
+  function extraDown(e){
+    if (Object.keys(pts).length === 0) return;      // 不在拖动中，放行
+    if (pts[e.pointerId]) return;
+    e.stopPropagation(); e.preventDefault();
+    pts[e.pointerId] = { x:e.clientX, y:e.clientY };
+    var L = ptList();
+    if (L.length === 2) {
+      pinch = { d:dist(L[0],L[1]), a:ang(L[0],L[1]), s:st.s, r:st.r };
+    }
+  }
+
+  function bindDrag(e){
+    beginDrag(e);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    window.addEventListener('pointerdown', extraDown, true);
+  }
+
   /* 统一在 canvas 的捕获阶段判定：点中墨迹=拖动图片，其余一律落墨 */
   canvas.addEventListener('pointerdown', function(e){
-    // 1) 已选中：这一下只用来取消选中，不落墨
+    // 1) 拖动进行中：并入手指（双指捏合）
+    if (Object.keys(pts).length > 0) {
+      extraDown(e);
+      return;
+    }
+    // 2) 已选中：这一下只用来取消选中，不落墨
     if (st.sel) {
       st.sel = false; apply();
       e.stopPropagation(); e.preventDefault();
       return;
     }
-    // 2) 点在图片真实轮廓内：拖动图片
+    // 3) 点在图片真实轮廓内：拖动图片
     if (hitTest(e.clientX, e.clientY)) {
-      beginDrag(e);
-      window.addEventListener('pointermove', onMove);
-      window.addEventListener('pointerup', onUp);
-      window.addEventListener('pointercancel', onUp);
+      bindDrag(e);
       e.stopPropagation(); e.preventDefault();
       return;
     }
-    // 3) 否则放行，交给流体落墨
+    // 4) 否则放行，交给流体落墨
   }, true);
 
   /* ── 元素栏 ── */
