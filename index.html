@@ -1873,10 +1873,6 @@ requestAnimationFrame(frame);
     var a = -(st.r || 0) * Math.PI / 180;
     var rx = (dx * Math.cos(a) - dy * Math.sin(a)) / (st.s || 1);
     var ry = (dx * Math.sin(a) + dy * Math.cos(a)) / (st.s || 1);
-    // 中心区无条件可点：稀疏点阵/细线（鲸鱼 5%、蒲公英 7% 墨占比）
-    // 若只按 alpha 判定，用户两指几乎落不到墨上，手势起不来
-    if (Math.abs(rx) < w * 0.28 && Math.abs(ry) < h * 0.28) return true;
-
     var ix = Math.floor((rx / w + 0.5) * HIT_W);
     var iy = Math.floor((ry / h + 0.5) * HIT_H);
     if (ix < 0 || iy < 0 || ix >= HIT_W || iy >= HIT_H) return false;
@@ -1949,6 +1945,12 @@ requestAnimationFrame(frame);
     }
   }
 
+  function inCatBox(x, y){
+    if (st.type === 'none') return false;
+    var r = cat.getBoundingClientRect();
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  }
+
   /* 拖动进行中：任何新落下的手指都并入，用于双指缩放/旋转 */
   function extraDown(e){
     if (Object.keys(pts).length === 0) return;      // 不在拖动中，放行
@@ -1957,6 +1959,30 @@ requestAnimationFrame(frame);
     pts[e.pointerId] = { x:e.clientX, y:e.clientY };
     if (ptList().length >= 2) beginPinch();
   }
+
+  /* 双指启动：两指都落在图片包围盒内即可，不要求点中墨迹
+     （单指仍只认墨迹，所以画墨不会被大片遮挡） */
+  var livePts = {};
+  window.addEventListener('pointerdown', function(e){
+    livePts[e.pointerId] = { x:e.clientX, y:e.clientY };
+    var ids = Object.keys(livePts);
+    if (ids.length !== 2 || Object.keys(pts).length > 0) return;
+    var A = livePts[ids[0]], B = livePts[ids[1]];
+    if (!inCatBox(A.x, A.y) || !inCatBox(B.x, B.y)) return;
+
+    st.sel = true; apply();
+    pts[ids[0]] = { x:A.x, y:A.y };
+    pts[ids[1]] = { x:B.x, y:B.y };
+    start = { x:st.x, y:st.y, cx:A.x, cy:A.y };
+    beginPinch();
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    e.stopPropagation(); e.preventDefault();
+  }, true);
+
+  window.addEventListener('pointerup', function(e){ delete livePts[e.pointerId]; }, true);
+  window.addEventListener('pointercancel', function(e){ delete livePts[e.pointerId]; }, true);
 
   function bindDrag(e){
     beginDrag(e);
