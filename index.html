@@ -244,18 +244,11 @@ html, body { background:#f2ecdf !important; overflow:hidden !important; }
   transform-origin:50% 50%;
   pointer-events:none;
 }
-/* 选中：虚线描边 + 四角标记 */
-#catinCat.sel { outline:none; }
-#catinCat.sel::after {
-  content:''; position:absolute; inset:-.8vmin;
-  border:.16vmin dashed rgba(179,53,43,.85); border-radius:.5vmin;
-  pointer-events:none;
-}
-#catinCat.sel::before {
-  content:''; position:absolute; right:-1.5vmin; bottom:-1.5vmin;
-  width:2.2vmin; height:2.2vmin; border-radius:50%;
-  background:#b3352b; box-shadow:0 0 0 .3vmin rgba(255,255,255,.85);
-  pointer-events:none;
+/* 选中：沿墨迹轮廓的红晕（drop-shadow 跟随 alpha 轮廓，不是矩形框） */
+#catinCat.sel {
+  filter:blur(.35px) saturate(.92) contrast(1.04)
+         drop-shadow(0 0 1.2px rgba(179,53,43,.85))
+         drop-shadow(0 0 3px rgba(179,53,43,.35));
 }
 @keyframes catBreathe {
   0%,100% { transform:scale(1); }
